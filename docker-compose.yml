@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # Redis - 用于Celery消息队列和缓存
+  redis:
+    image: redis:7-alpine
+    container_name: briefing-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  # PostgreSQL - 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: briefing-postgres
+    environment:
+      POSTGRES_DB: briefing_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Celery Worker - 异步任务处理器
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.lightweight
+    container_name: briefing-worker
+    command: celery -A app.tasks.briefing_task worker --loglevel=info --concurrency=2
+    volumes:
+      - .:/app
+      - ./output:/app/output
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  # Celery Beat - 定时任务调度器
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.lightweight
+    container_name: briefing-beat
+    command: celery -A app.tasks.briefing_task beat --loglevel=info
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Flower - Celery监控面板（可选）
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile.lightweight
+    container_name: briefing-flower
+    command: celery -A app.tasks.briefing_task flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - celery_worker
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # FastAPI Web服务（可选）
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.lightweight
+    container_name: briefing-web
+    command: uvicorn app.main:app --host 0.0.0.0 --port=8000
+    volumes:
+      - .:/app
+      - ./output:/app/output
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+    profiles:
+      - web
+
+volumes:
+  redis_data:
+  postgres_data:
