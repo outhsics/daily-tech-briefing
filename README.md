@@ -1,6 +1,13 @@
 # 每日科技简报生成系统 🤖📰
 
-一个基于 AI 的自动化科技简报生成系统，定时抓取多个科技媒体内容，使用大模型智能分析并生成结构化简报页面。
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com)
+[![Celery](https://img.shields.io/badge/Celery-5.3+-red.svg)](https://docs.celeryq.dev)
+
+> 一个基于 AI 的自动化科技简报生成系统，定时抓取多个科技媒体内容，使用大模型智能分析并生成结构化简报页面。
+
+## ⭐ 如果这个项目对你有帮助，请给个 Star 支持！
 
 ## ✨ 特性
 
